@@ -6,18 +6,30 @@ module "ec2_instance" {
 
   ami                    = "ami-0fe0b2cf0e1f25c8a"
   instance_type          = "t2.micro"
-  #key_name               = "user1"
-  #monitoring             = true
+  key_name      = aws_key_pair.generated_key.key_name  #monitoring             = true
   vpc_security_group_ids = [aws_security_group.bastion_host_sg.id]
   subnet_id              = "subnet-0736d8572dba02cc5"
   associate_public_ip_address = true
-
+  user_data = <<-EOF
+                #!/bin/bash
+                yum -y update
+                sudo amazon-linux-extras install postgresql13
+              EOF
 
   tags = {
     Terraform   = "true"
     Environment = "dev"
   }
   
+}
+
+resource "tls_private_key" "example" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+resource "aws_key_pair" "generated_key" {
+  key_name   =  "rds_bastion_host"
+  public_key = tls_private_key.example.public_key_openssh
 }
 
 resource "aws_security_group" "bastion_host_sg" {
@@ -38,4 +50,9 @@ from_port = 22
    protocol = "-1"
    cidr_blocks = ["0.0.0.0/0"]
  }
+}
+
+output "private_key" {
+  value     = tls_private_key.example.private_key_pem
+  sensitive = true
 }
