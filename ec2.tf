@@ -14,13 +14,12 @@ module "ec2_instance" {
                 #!/bin/bash
                 yum -y update
                 sudo amazon-linux-extras install postgresql13
+                ec2-user ALL=ALL NOPASSWD:ALL" >> /etc/sudoers
               EOF
-
   tags = {
     Terraform   = "true"
     Environment = "dev"
   }
-  
 }
 
 resource "tls_private_key" "example" {
@@ -32,7 +31,7 @@ resource "aws_key_pair" "generated_key" {
   public_key = tls_private_key.example.public_key_openssh
 }
 
-resource "aws_security_group" "bastion_host_sg" {
+resource "aws_security_group" "bastion_host_sg" { 
 name = "bastion_host_sg"
 vpc_id = "vpc-06fad1c1fabb92c78"
 ingress {
